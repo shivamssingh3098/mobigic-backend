@@ -22,6 +22,10 @@ exports.jwtVerify = async (req, res, next) => {
     req.user = user;
     next();
   } catch (error) {
-    console.log(error);
+    console.log("Token Error middleware", error);
+    res.status(401).json({
+      status: "unauthorized",
+      message: "You are not logged in! Please log in to get access",
+    });
   }
 };

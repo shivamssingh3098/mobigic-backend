@@ -14,12 +14,30 @@ const generateToken = async (userId) => {
   }
 };
 
+exports.currentUser = async (req, res) => {
+  try {
+    const currentUser = req.user;
+    console.log("currentUser", currentUser);
+    res.status(200).json({
+      status: "success",
+      message: "User logged in successfully",
+      user: currentUser,
+    });
+  } catch (error) {
+    console.log("Current user is not available", error);
+    res.status(500).json({
+      status: "error",
+      message: "Internal server error",
+    });
+  }
+};
+
 exports.registerUser = async (req, res) => {
   try {
-    const { userName, email, fullName, password } = req.body;
-    console.log(userName, email, fullName, password);
+    const { userName, email, number, fullName, password } = req.body;
+    console.log(userName, email, number, fullName, password);
     if (
-      [userName, email, fullName, password].some(
+      [userName, email, number, fullName, password].some(
         (field) => field?.trim() === ""
       )
     ) {
@@ -39,7 +57,13 @@ exports.registerUser = async (req, res) => {
         message: "User already exists",
       });
     }
-    const user = await User.create({ userName, email, fullName, password });
+    const user = await User.create({
+      userName,
+      email,
+      number,
+      fullName,
+      password,
+    });
     const createdUser = await User.findById(user._id).select("-password");
 
     if (!createdUser) {
@@ -75,20 +99,46 @@ exports.loginUser = async (req, res) => {
       });
     }
     const isPasswordValid = await user.isPasswordCorrect(password);
+
     if (!isPasswordValid) {
       res.status(401).json({
         message: "Invalid user credentials",
       });
     }
 
-    const { accessToken } = await generateToken(user._id);
-    console.log(accessToken);
+    // const { accessToken } = await generateToken(user._id);
+    // console.log(accessToken);
     const loggedInUser = await User.findById(user._id).select("-password");
+    // const options = {
+    //   httpOnly: true,
+    //   secure: true,
+    // };
+    // console.log(loggedInUser);
+    // res.cookie("token", accessToken, options);
+
+    console.log("loggedInUser before otp", loggedInUser);
+    return res.status(200).json({
+      message: "Correct credentials",
+      user: loggedInUser,
+      // token: accessToken,
+    });
+  } catch (error) {
+    console.log("Not login", error);
+  }
+};
+
+exports.otpAuthentication = async (req, res) => {
+  try {
+    console.log("OTP Login", req.params.id);
+
+    const { accessToken } = await generateToken(req.params.id);
+    console.log(accessToken);
+    const loggedInUser = await User.findById(req.params.id).select("-password");
     const options = {
       httpOnly: true,
       secure: true,
     };
-    console.log(loggedInUser);
+    console.log("loggedInUser", loggedInUser);
     res.cookie("token", accessToken, options);
     return res.status(200).json({
       message: "User logged in successfully",
@@ -96,7 +146,7 @@ exports.loginUser = async (req, res) => {
       token: accessToken,
     });
   } catch (error) {
-    console.log(error);
+    console.log("OTP Authentication failed", error);
   }
 };
 

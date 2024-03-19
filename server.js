@@ -12,7 +12,7 @@ dotenv.config({
   path: "./.env",
 });
 
-let port = process.env.PORT || 8000;
+let port = process.env.PORT || 8001;
 connectDb()
   .then(() => {
     app.on("error", (err) => {
